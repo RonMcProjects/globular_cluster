@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 512
+#define WINDOW_WIDTH 700
+#define WINDOW_HEIGHT 700
 
 /*
  * Constants
@@ -226,9 +226,9 @@ int display_something(int iter)
         }
         /* REM  3-DIMENTIONAL PLACE */
         do {
-            X = RAND - 0.5;
-            Y = RAND - 0.5;
-            Z = RAND - 0.5;
+            X = (RAND - 0.5) * 2.0; /* Fixed bug from the original. */
+            Y = (RAND - 0.5) * 2.0; /* Multiply by two for the unitary */
+            Z = (RAND - 0.5) * 2.0; /* sphere radius. */
             S1 = sqrt(X * X + Y * Y + Z * Z);
         } while (S1 > 1.0);
         /* REM  POINT IS NOW IN SPHERE */
