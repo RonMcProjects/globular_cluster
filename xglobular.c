@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define WINDOW_WIDTH 700
-#define WINDOW_HEIGHT 700
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 200
 
 /*
  * Constants
@@ -29,7 +29,7 @@ Display *display;
 int screen;
 Window main_window;
 GC gc;
-unsigned long foreground, background;
+unsigned long foreground, background, otherfg;
 XColor RGB_color, hardware_color;    /* added for color. */
 Colormap color_map;      /* added for color. */
 
@@ -58,6 +58,7 @@ void initX()
     /* Set the default foreground and background, in case we cannot use colour. */
     foreground = BlackPixel(display, screen);
     background = WhitePixel(display, screen);
+    otherfg = BlackPixel(display, screen);
 
     if (depth > 1)              /* not monochrome */
     {
@@ -66,9 +67,13 @@ void initX()
             && XAllocColor(display, color_map, &hardware_color) != 0)
             background = hardware_color.pixel;
 
-        if (XLookupColor(display, color_map, "white", &RGB_color, &hardware_color) != 0
+        if (XLookupColor(display, color_map, "DarkSlateBlue", &RGB_color, &hardware_color) != 0
             && XAllocColor(display, color_map, &hardware_color) != 0)
             foreground = hardware_color.pixel;
+
+        if (XLookupColor(display, color_map, "MediumSlateBlue", &RGB_color, &hardware_color) != 0
+            && XAllocColor(display, color_map, &hardware_color) != 0)
+            otherfg = hardware_color.pixel;
 
     }
 }
@@ -197,7 +202,7 @@ void GOSUB_200()
 
 int display_something(int iter)
 {
-    int i;
+    int i, w;
     int fd;
     XEvent event;
 
@@ -236,6 +241,14 @@ int display_something(int iter)
         GOSUB_200();
     }
     close(fd);
+    XSetForeground(display, gc, otherfg);
+    for (w = 0; w <= WINDOW_HEIGHT; w += WINDOW_HEIGHT/25)
+    {
+      XDrawLine (display, main_window, gc,
+                 w*WINDOW_WIDTH/WINDOW_HEIGHT, WINDOW_HEIGHT, 0, w);
+      XDrawLine (display, main_window, gc,
+                 w*WINDOW_WIDTH/WINDOW_HEIGHT, 0, WINDOW_WIDTH, w);
+    }
 
     return (0);
 }
