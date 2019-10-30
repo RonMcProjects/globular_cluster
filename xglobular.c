@@ -245,11 +245,13 @@ int display_something(int iter)
     for (w = 0; w <= WINDOW_HEIGHT; w += WINDOW_HEIGHT/25)
     {
       XDrawLine (display, main_window, gc,
-                 w*WINDOW_WIDTH/WINDOW_HEIGHT*3/4, WINDOW_HEIGHT, 0, w);
+                 w*WINDOW_WIDTH/WINDOW_HEIGHT, WINDOW_HEIGHT, 0, w);
       XDrawLine (display, main_window, gc,
-                 WINDOW_WIDTH/4+(w*WINDOW_WIDTH/WINDOW_HEIGHT*3/4), 0, WINDOW_WIDTH, w);
+                 w*WINDOW_WIDTH/WINDOW_HEIGHT, 0, WINDOW_WIDTH, w);
       XDrawLine (display, main_window, gc,
                  0, WINDOW_HEIGHT-1, WINDOW_WIDTH, WINDOW_HEIGHT-1);
+      XDrawLine (display, main_window, gc,
+                 WINDOW_WIDTH-1, 0, WINDOW_WIDTH-1, WINDOW_HEIGHT); 
 
     }
 
