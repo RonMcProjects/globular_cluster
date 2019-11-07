@@ -32,6 +32,8 @@ GC gc;
 unsigned long foreground, background, otherfg;
 XColor RGB_color, hardware_color;    /* added for color. */
 Colormap color_map;      /* added for color. */
+char defaultfg[] = "DarkSlateBlue";
+char *fgcolour;
 
 /*
  * Connect to the server and get the display device
@@ -67,7 +69,7 @@ void initX()
             && XAllocColor(display, color_map, &hardware_color) != 0)
             background = hardware_color.pixel;
 
-        if (XLookupColor(display, color_map, "DarkSlateBlue", &RGB_color, &hardware_color) != 0
+        if (XLookupColor(display, color_map, fgcolour, &RGB_color, &hardware_color) != 0
             && XAllocColor(display, color_map, &hardware_color) != 0)
             foreground = hardware_color.pixel;
 
@@ -141,7 +143,7 @@ void quitX()
 
 uint16_t getrand(int fd)
 {
-    uint32_t retval;
+    uint16_t retval;
 
     if (fd == -1)
     {
@@ -170,11 +172,7 @@ float X, Y, Z;
 float S1;
 float A;
 
-#if defined(DEG)
-#define ATN(val) (atan(val) * 90.0 / (PI / 2.0))
-#else
-#define ATN(val) (atan(val))
-#endif
+#define ATN(val) (atanf(val))
 
 void GOSUB_100()
 {
@@ -265,13 +263,6 @@ char **argv;
     int iter;
     XEvent event;
 
-    initX();
-    main_window = openWindow(10, 20, WINDOW_WIDTH, WINDOW_HEIGHT, 5, argc, argv);
-    gc = getGC();
-
-    /* Display the window on the screen. */
-    XMapWindow(display, main_window);
-
     if (argc > 1)
     {
         iter = atoi(argv[1]);
@@ -280,6 +271,22 @@ char **argv;
     {
         iter = 25000;
     }
+    if (argc > 2)
+    {
+        fgcolour = argv[2];
+    }
+    else
+    {
+        fgcolour = &defaultfg[0];
+    }
+
+    initX();
+    main_window = openWindow(10, 20, WINDOW_WIDTH, WINDOW_HEIGHT, 5, argc, argv);
+    gc = getGC();
+
+    /* Display the window on the screen. */
+    XMapWindow(display, main_window);
+
     display_something(iter);
 
     XSelectInput(display, main_window, KeyPressMask | ButtonPressMask);
