@@ -1,5 +1,5 @@
 /* 
- * gcc -Wall xglobular.c -lm -lX11 -o xglobular
+ * gcc -Wall xglobular_banner.c -lm -lX11 -o xglobular
  */
 
 #include <stdio.h>
@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define WINDOW_WIDTH 800
-#define WINDOW_HEIGHT 200
+#define WINDOW_WIDTH 1200
+#define WINDOW_HEIGHT 300
 
 /*
  * Constants
@@ -139,9 +139,9 @@ void quitX()
     exit(0);
 }
 
-int32_t getrand(int fd)
+uint16_t getrand(int fd)
 {
-    int32_t retval;
+    uint32_t retval;
 
     if (fd == -1)
     {
@@ -149,27 +149,26 @@ int32_t getrand(int fd)
     }
     else
     {
-        read(fd, &retval, sizeof(int32_t));
-        retval &= RAND_MAX;
+        read(fd, &retval, sizeof(uint16_t));
     }
 
     return(retval);
 }
 
-#define RAND ((double)getrand(fd) / (double)RAND_MAX)
+#define RAND ((float)getrand(fd) / (float)0xffff)
 
-double R0, R2, R3;
-double PI;
-double C0;
-double R1;
-double XM, YM;
-double X2, Y2, S;
-double C;
+float R0, R2, R3;
+float PI;
+float C0;
+float R1;
+float XM, YM;
+float X2, Y2, S;
+float C;
 int K;
-double R, C1, D;
-double X, Y, Z;
-double S1;
-double A;
+float R, C1, D;
+float X, Y, Z;
+float S1;
+float A;
 
 #if defined(DEG)
 #define ATN(val) (atan(val) * 90.0 / (PI / 2.0))
@@ -217,7 +216,7 @@ int display_something(int iter)
     PI = 3.14159265;
     C0 = PI * PI * R3 / 4.0;
     R1 = R0 / sqrt(2.0);
-    XM = (double)WINDOW_WIDTH; YM = (double)WINDOW_HEIGHT;
+    XM = (float)WINDOW_WIDTH; YM = (float)WINDOW_HEIGHT;
     X2 = XM / 2.0; Y2 = YM / 2.0; S = 5.0;
     for (i = 1; i <= iter; i++)
     {
