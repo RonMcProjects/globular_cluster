@@ -1,5 +1,5 @@
 /* 
- * gcc -Wall xglobular_banner.c -lm -lX11 -o xglobular
+ * gcc -Wall xglobular.c -lm -lX11 -o xglobular
  */
 
 #include <stdio.h>
@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define WINDOW_WIDTH 1200
-#define WINDOW_HEIGHT 300
+#define WINDOW_WIDTH 512
+#define WINDOW_HEIGHT 512
 
 /*
  * Constants
@@ -29,11 +29,9 @@ Display *display;
 int screen;
 Window main_window;
 GC gc;
-unsigned long foreground, background, otherfg;
+unsigned long foreground, background;
 XColor RGB_color, hardware_color;    /* added for color. */
 Colormap color_map;      /* added for color. */
-char defaultfg[] = "DarkSlateBlue";
-char *fgcolour;
 
 /*
  * Connect to the server and get the display device
@@ -60,7 +58,6 @@ void initX()
     /* Set the default foreground and background, in case we cannot use colour. */
     foreground = BlackPixel(display, screen);
     background = WhitePixel(display, screen);
-    otherfg = BlackPixel(display, screen);
 
     if (depth > 1)              /* not monochrome */
     {
@@ -69,13 +66,9 @@ void initX()
             && XAllocColor(display, color_map, &hardware_color) != 0)
             background = hardware_color.pixel;
 
-        if (XLookupColor(display, color_map, fgcolour, &RGB_color, &hardware_color) != 0
+        if (XLookupColor(display, color_map, "white", &RGB_color, &hardware_color) != 0
             && XAllocColor(display, color_map, &hardware_color) != 0)
             foreground = hardware_color.pixel;
-
-        if (XLookupColor(display, color_map, "MediumSlateBlue", &RGB_color, &hardware_color) != 0
-            && XAllocColor(display, color_map, &hardware_color) != 0)
-            otherfg = hardware_color.pixel;
 
     }
 }
@@ -199,13 +192,8 @@ void GOSUB_200()
 
 int display_something(int iter)
 {
-    int i, w;
+    int i;
     int fd;
-    XEvent event;
-
-    /* flush event queue */
-    XSelectInput(display, main_window, ExposureMask);
-    XNextEvent(display, &event);
 
     fd = open("/dev/urandom", O_RDONLY);
     /* REM   MAKE A GLOBULAR
@@ -238,19 +226,6 @@ int display_something(int iter)
         GOSUB_200();
     }
     close(fd);
-    XSetForeground(display, gc, otherfg);
-    for (w = 0; w <= WINDOW_HEIGHT; w += WINDOW_HEIGHT/25)
-    {
-      XDrawLine (display, main_window, gc,
-                 w*WINDOW_WIDTH/WINDOW_HEIGHT, WINDOW_HEIGHT, 0, w);
-      XDrawLine (display, main_window, gc,
-                 w*WINDOW_WIDTH/WINDOW_HEIGHT, 0, WINDOW_WIDTH, w);
-      XDrawLine (display, main_window, gc,
-                 0, WINDOW_HEIGHT-1, WINDOW_WIDTH, WINDOW_HEIGHT-1);
-      XDrawLine (display, main_window, gc,
-                 WINDOW_WIDTH-1, 0, WINDOW_WIDTH-1, WINDOW_HEIGHT); 
-
-    }
 
     return (0);
 }
@@ -270,14 +245,6 @@ char **argv;
     else
     {
         iter = 25000;
-    }
-    if (argc > 2)
-    {
-        fgcolour = argv[2];
-    }
-    else
-    {
-        fgcolour = &defaultfg[0];
     }
 
     initX();
