@@ -1,7 +1,6 @@
 /* 
  * gcc -Wall xglobular.c -lm -lX11 -o xglobular
  */
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,126 +12,20 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define WINDOW_WIDTH 512
-#define WINDOW_HEIGHT 512
-
 /*
  * Constants
  */
 char WINDOW_NAME[] = __FILE__;
 char ICON_NAME[] = __FILE__;
+#define WINDOW_WIDTH 512
+#define WINDOW_HEIGHT 512
 
 /*
  * Globals
  */
-Display *display;
+Display *display = NULL;
+Window xwindow;
 int screen;
-Window main_window;
-GC gc;
-unsigned long foreground, background;
-XColor RGB_color, hardware_color;    /* added for color. */
-Colormap color_map;      /* added for color. */
-
-/*
- * Connect to the server and get the display device
- * and the screen number.
- */
-void initX()
-{
-    int depth;                  /* depth of the color map. */
-
-    /*
-     * Set the display name from the environment variable DISPLAY.
-     */
-    display = XOpenDisplay(NULL);
-    if (display == NULL)
-    {
-        fprintf(stderr, "Unable to open display %s\n", XDisplayName(NULL));
-        exit(1);
-    }
-    screen = DefaultScreen(display);
-
-    /* Find the depth of the colour map. */
-    depth = DefaultDepth(display, screen);
-
-    /* Set the default foreground and background, in case we cannot use colour. */
-    foreground = BlackPixel(display, screen);
-    background = WhitePixel(display, screen);
-
-    if (depth > 1)              /* not monochrome */
-    {
-        color_map = DefaultColormap(display, screen);
-        if (XLookupColor(display, color_map, "black", &RGB_color, &hardware_color) != 0
-            && XAllocColor(display, color_map, &hardware_color) != 0)
-            background = hardware_color.pixel;
-
-        if (XLookupColor(display, color_map, "white", &RGB_color, &hardware_color) != 0
-            && XAllocColor(display, color_map, &hardware_color) != 0)
-            foreground = hardware_color.pixel;
-
-    }
-}
-
-/*
- * Opens a window on the display device, and returns
- * the windows ID.
- */
-Window openWindow(x, y, width, height, border_width, argc, argv)
-int x, y,                       /* co-ords of the upper left corner in pixels. */
-width, height,                  /* size of the windows in pixels. */
-    border_width;               /* the border width is not included in the other dimensions. */
-int argc;
-char **argv;
-{
-    Window new_window;
-    XSizeHints size_hints;
-
-    /* now create the window. */
-    new_window = XCreateSimpleWindow(display,
-                                     DefaultRootWindow(display),
-                                     x, y, width, height, border_width, foreground, background);
-
-    /* set up the size hints for the window manager. */
-    size_hints.x = x;
-    size_hints.y = y;
-    size_hints.width = width;
-    size_hints.height = height;
-
-    size_hints.flags = PPosition | PSize;
-
-    /* and state what hints are included. */
-    XSetStandardProperties(display, new_window, WINDOW_NAME, ICON_NAME, None,   /* no icon map */
-                           argv, argc, &size_hints);
-
-    /* Return the window ID. */
-    return (new_window);
-}
-
-/*
- * Create a graphics context using default values and,
- * return it in the pointer gc.
- */
-GC getGC()
-{
-    GC gc;
-    XGCValues gcValues;
-
-    gc = XCreateGC(display, main_window, (unsigned long)0, &gcValues);
-
-    XSetBackground(display, gc, background);
-    XSetForeground(display, gc, foreground);
-
-    return (gc);
-}
-
-/*
- * Terminate the program gracefully.
- */
-void quitX()
-{
-    XCloseDisplay(display);
-    exit(0);
-}
 
 uint16_t getrand(int fd)
 {
@@ -186,11 +79,11 @@ void GOSUB_200()
         return;
     if (X >= XM || Y >= YM)
         return;
-    XDrawPoint(display, main_window, gc, (int)X, (int)Y);
+    XDrawPoint(display, xwindow, DefaultGC(display, screen), (int)X, (int)Y);
     XFlush(display);
 }
 
-int display_something(int iter)
+int generate_cluster(int iter)
 {
     int i;
     int fd;
@@ -230,13 +123,41 @@ int display_something(int iter)
     return (0);
 }
 
+void setup_xwindow(int argc, char **argv)
+{
+    XSizeHints size_hints;
+
+    display = XOpenDisplay(NULL);
+    if (display == NULL)
+    {
+        fprintf(stderr, "Cannot open display\n");
+        exit(1);
+    }
+
+    screen = DefaultScreen(display);
+    xwindow = XCreateSimpleWindow(display, RootWindow(display, screen), 10, 10, WINDOW_WIDTH, WINDOW_HEIGHT, 1,
+                                   WhitePixel(display, screen), BlackPixel(display, screen));
+    XSetBackground(display, DefaultGC(display, screen), BlackPixel(display, screen));
+    XSetForeground(display, DefaultGC(display, screen), WhitePixel(display, screen));
+    /* set up the size hints for the window manager. */
+    size_hints.x = 10;
+    size_hints.y = 10;
+    size_hints.width = WINDOW_WIDTH;
+    size_hints.height = WINDOW_HEIGHT;
+    size_hints.flags = PPosition | PSize;
+    /* and state what hints are included. */
+    XSetStandardProperties(display, xwindow, WINDOW_NAME, ICON_NAME, None,   /* no icon map */
+                           argv, argc, &size_hints);
+    XSelectInput(display, xwindow, ExposureMask | KeyPressMask | ButtonPressMask);
+    XMapWindow(display, xwindow);
+}
+
 int main(argc, argv)
 int argc;
 char **argv;
 {
-    int done;
-    int iter;
     XEvent event;
+    int iter;
 
     if (argc > 1)
     {
@@ -247,28 +168,19 @@ char **argv;
         iter = 25000;
     }
 
-    initX();
-    main_window = openWindow(10, 20, WINDOW_WIDTH, WINDOW_HEIGHT, 5, argc, argv);
-    gc = getGC();
+    setup_xwindow(argc, argv);
 
-    /* Display the window on the screen. */
-    XMapWindow(display, main_window);
-
-    display_something(iter);
-
-    XSelectInput(display, main_window, KeyPressMask | ButtonPressMask);
-
-    done = 0;
-    while (!done)
+    while(1)
     {
         XNextEvent(display, &event);
+        if (event.type == Expose)
+        {
+            generate_cluster(iter);
+        }
         if ((event.type == KeyPress) || (event.type == ButtonPress))
-            done = 1;
+            break;
     }
 
-    /*  sleep( 10 ); */
-
-    quitX();
-
-    return (0);
+    XCloseDisplay(display);
+    return(0);
 }
