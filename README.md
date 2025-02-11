@@ -17,3 +17,5 @@ Anyway here it is, new and (somewhat) improved.
 # Specify a number of stars
 ./xglobular 10000
 ```
+The original source code can be seen on Sky & Telescope's website here:
+https://skyandtelescope.org/wp-content/uploads/model.bas
